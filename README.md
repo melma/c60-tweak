@@ -1,5 +1,5 @@
 ## AMD C-60 Linux Tweak
-This is a dumb Linux bash script for undervolting and unlocking turbo mode in AMD C-60 from Brazos CPU family. It was written because I noticed some problems with CPU state management in my AO722 netbook with Ubuntu.
+This is a dumb bash script for undervolting and unlocking turbo mode in AMD C-60 (from Brazos CPU family) on Linux. It was written because I noticed some problems with CPU state management in my AO722 netbook running Ubuntu.
 
 The C-60 CPU has three states: P0, P1 and P2.
 * P0 / 1.3 GHz / turbo mode
