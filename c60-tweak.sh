@@ -74,7 +74,7 @@ undervoltAndUnlockTurbo() {
         echo "Lowered voltage and unlocked turbo mode"
         changeFlag=1
     else
-        echo "Could not set new parameters"
+        echo "Couldn't set new parameters"
         exit 5
     fi
 }
@@ -89,7 +89,7 @@ enableOnStartup() {
         if sudo sed -i "$exitLine""i$commandsSeq $tweakedParams" "$rcFile"; then
             echo "Enabled on system startup"    
         else
-            echo "Could not enable on system startup"
+            echo "Couldn't enable on system startup"
             exit 6      
         fi
     fi
