@@ -89,17 +89,17 @@ enableOnStartup() {
     else
         exitLine=`grep -n "^#*exit 0" "$rcFile" | cut -d : -f 1`
         if sudo sed -i "$exitLine""i$commandsSeq $tweakedParams" "$rcFile"; then
+            if [ -d $sleepDir ]; then
+                sudo bash -c "echo '#!/bin/sh' > $sleepDir$sleepFile"
+                sudo bash -c "echo 'if [ \$1 = post ]; then' >> $sleepDir$sleepFile"
+                sudo bash -c "echo '$commandsSeq $tweakedParams' >> $sleepDir$sleepFile"
+                sudo bash -c "echo -n 'fi' >> $sleepDir$sleepFile"
+                sudo chmod +x "$sleepDir$sleepFile"
+            fi
             echo "Enabled on system startup"    
         else
             echo "Couldn't enable on system startup"
             exit 6      
-        fi
-        if [ -d $sleepDir ]; then
-            sudo bash -c "echo '#!/bin/sh' > $sleepDir$sleepFile"
-            sudo bash -c "echo 'if [ \$1 = post ]; then' >> $sleepDir$sleepFile"
-            sudo bash -c "echo '$commandsSeq $tweakedParams' >> $sleepDir$sleepFile"
-            sudo bash -c "echo -n 'fi' >> $sleepDir$sleepFile"
-            sudo chmod +x "$sleepDir$sleepFile"
         fi
     fi
 }
