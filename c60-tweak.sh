@@ -2,6 +2,8 @@
 
 changeFlag=0
 rcFile="/etc/rc.local"
+sleepDir="/lib/systemd/system-sleep/"
+sleepFile="c60-tweak-sleep"
 commandsSeq="modprobe msr;"
 defaultParams="-p 0:0x22 -p 1:0x28,4 -p 2:0x2B"
 tweakedParams="-p 0:0x28 -p 1:0x28,3 -p 2:0x38"
@@ -92,6 +94,13 @@ enableOnStartup() {
             echo "Couldn't enable on system startup"
             exit 6      
         fi
+        if [ -d $sleepDir ]; then
+            sudo bash -c "echo '#!/bin/sh' > $sleepDir$sleepFile"
+            sudo bash -c "echo 'if [ \$1 = post ]; then' >> $sleepDir$sleepFile"
+            sudo bash -c "echo '$commandsSeq $tweakedParams' >> $sleepDir$sleepFile"
+            sudo bash -c "echo -n 'fi' >> $sleepDir$sleepFile"
+            sudo chmod +x "$sleepDir$sleepFile"
+        fi
     fi
 }
 
@@ -107,6 +116,9 @@ restoreAndDisable() {
     commandsLine=`grep -n "$commandsSeq" "$rcFile" | cut -d : -f 1`
     if [ ! -z $commandsLine ]; then
         if sudo sed -i "$commandsLine""d" "$rcFile"; then
+            if [ -f "$sleepDir$sleepFile" ]; then
+                sudo rm "$sleepDir$sleepFile"
+            fi
             echo "Disabled on system startup"   
         else
             echo "Couldn't disable on system startup"
