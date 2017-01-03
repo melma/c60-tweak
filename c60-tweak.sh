@@ -1,12 +1,10 @@
 #!/bin/bash
 
-changeFlag=0
-rcFile="/etc/rc.local"
-sleepDir="/lib/systemd/system-sleep/"
-sleepFile="c60-tweak-sleep"
-commandsSeq="modprobe msr;"
-defaultParams="-p 0:0x22 -p 1:0x28,4 -p 2:0x2B"
-tweakedParams="-p 0:0x28 -p 1:0x28,3 -p 2:0x38"
+defaultParameters="-p 0:0x22 -p 1:0x28,4 -p 2:0x2B"
+tweakedParameters="-p 0:0x28 -p 1:0x28,3 -p 2:0x38"
+startupScriptFileName="c60-tweak-startup.sh"
+undervoltProgramPath=""
+tweaked=0
 
 requestSudo() {
     sudo echo -n || {
@@ -16,7 +14,7 @@ requestSudo() {
 
 checkCpu() {
     lscpu | grep -q "AMD C-60" || {
-        echo "This is useful only for AMD C-60 processors"
+        echo "This is intended only for AMD C-60 processors"
         exit 2  
     }
 }
@@ -25,8 +23,9 @@ checkUndervolt() {
     type undervolt &> /dev/null || {
         echo "Program 'undervolt' couldn't be found"
         exit 3
-    }   
-    commandsSeq+=`which undervolt`
+    }
+    
+    undervoltProgramPath=`which undervolt`
 }
 
 checkMsr() {
@@ -38,7 +37,7 @@ checkMsr() {
     }
 }
 
-options() {
+showOptions() {
     echo "AMD C-60 Linux Tweak"
     echo "1 - Check current status"
     echo "2 - Undervolt and unlock turbo mode"
@@ -72,9 +71,10 @@ checkStatus() {
 
 undervoltAndUnlockTurbo() {
     checkMsr
-    if sudo undervolt $tweakedParams &> /dev/null; then
+    
+    if sudo undervolt $tweakedParameters &> /dev/null; then
         echo "Lowered voltage and unlocked turbo mode"
-        changeFlag=1
+        tweaked=1
     else
         echo "Couldn't set new parameters"
         exit 5
@@ -82,48 +82,41 @@ undervoltAndUnlockTurbo() {
 }
 
 enableOnStartup() {
-    if grep -q "$commandsSeq" "$rcFile"; then
+    if [ -f /etc/init.d/$startupScriptFileName ]; then
         echo "It's already enabled on system startup"
-    elif [ $changeFlag = 0 ]; then
-        echo "Use option no. 2 before enabling"
+    elif [ $tweaked = 0 ]; then
+        echo "Use option no. 2 before enabling on system startup"
     else
-        exitLine=`grep -n "^#*exit 0" "$rcFile" | cut -d : -f 1`
-        if sudo sed -i "$exitLine""i$commandsSeq $tweakedParams" "$rcFile"; then
-            if [ -d $sleepDir ]; then
-                sudo bash -c "echo '#!/bin/sh' > $sleepDir$sleepFile"
-                sudo bash -c "echo 'if [ \$1 = post ]; then' >> $sleepDir$sleepFile"
-                sudo bash -c "echo '$commandsSeq $tweakedParams' >> $sleepDir$sleepFile"
-                sudo bash -c "echo -n 'fi' >> $sleepDir$sleepFile"
-                sudo chmod +x "$sleepDir$sleepFile"
-            fi
-            echo "Enabled on system startup"    
-        else
-            echo "Couldn't enable on system startup"
-            exit 6      
-        fi
+        sudo bash -c "echo -n -e \
+        '#!/bin/bash\n'\
+        'modprobe msr\n'\
+        '$undervoltProgramPath $tweakedParameters'\
+        > /etc/init.d/$startupScriptFileName"
+        
+        sudo chmod +x /etc/init.d/$startupScriptFileName
+        sudo update-rc.d $startupScriptFileName start 2 > /dev/null 2>&1
+        
+        echo "Enabled on system startup"
     fi
 }
 
 restoreAndDisable() {
     checkMsr
-    if sudo undervolt $defaultParams &> /dev/null; then
+    
+    if sudo undervolt $defaultParameters &> /dev/null; then
         echo "Restored voltages and turbo mode default behavior"
-        changeFlag=0
+        tweaked=0
     else
-        echo "Couldn't set parameters"
+        echo "Couldn't restore voltages and turbo mode default behavior"
         exit 5
     fi
-    commandsLine=`grep -n "$commandsSeq" "$rcFile" | cut -d : -f 1`
-    if [ ! -z $commandsLine ]; then
-        if sudo sed -i "$commandsLine""d" "$rcFile"; then
-            if [ -f "$sleepDir$sleepFile" ]; then
-                sudo rm "$sleepDir$sleepFile"
-            fi
-            echo "Disabled on system startup"   
-        else
-            echo "Couldn't disable on system startup"
-            exit 6      
-        fi
+    
+    if [ -f /etc/init.d/$startupScriptFileName ]; then
+        sudo update-rc.d $startupScriptFileName disable > /dev/null 2>&1
+        sudo update-rc.d $startupScriptFileName remove > /dev/null 2>&1
+        sudo rm /etc/init.d/$startupScriptFileName
+        
+        echo "Disabled on system startup"
     else
         echo "It's not enabled on system startup"
     fi
@@ -133,5 +126,5 @@ requestSudo
 checkCpu
 checkUndervolt
 checkMsr
-options
+showOptions
 selectOption
