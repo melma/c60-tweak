@@ -20,4 +20,4 @@ With this script it's possible to lower the voltages to a set of stable values. 
 This script requires a GNU GPL program [undervolt](https://sourceforge.net/projects/undervolt/) (v0.4) written by Thierry Goubier. Compiled binary should be placed in `/usr/local/sbin/` or `/usr/local/bin/`.
 
 ### Usage
-Make this script an executable via terminal with `chmod +x c60-tweak.sh`, then execute it with `sudo ./c60-tweak.sh` and follow on-screen instructions.
+Execute the script in a terminal with `sudo ./c60-tweak.sh` and follow on-screen instructions.
