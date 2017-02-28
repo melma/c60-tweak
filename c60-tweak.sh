@@ -30,7 +30,7 @@ checkUndervolt() {
 
 checkMsr() {
     lsmod | grep -q msr || {
-        type sudo modprobe msr &> /dev/null || {
+        sudo modprobe msr &> /dev/null || {
             echo "MSR module couldn't be loaded"
             exit 4      
         }
