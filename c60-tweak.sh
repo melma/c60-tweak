@@ -63,7 +63,7 @@ selectOption() {
 checkStatus() {
     checkMsr
     
-    if sudo undervolt -r | grep -zq ".*28.*3\..*38.*"; then
+    if sudo undervolt -r | grep -zq ".*28.*28.*3\..*38.*"; then
         echo "Voltage is lowered and turbo mode is unlocked"
     else
         echo "Voltage is default and turbo mode is locked"
