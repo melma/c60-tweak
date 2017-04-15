@@ -88,14 +88,18 @@ enableOnStartup() {
     elif [ $tweaked = 0 ]; then
         echo "Use option no. 2 before enabling on system startup"
     else
-        sudo bash -c "echo -n -e \
-        '#!/bin/bash\n'\
-        'modprobe msr\n'\
-        '$undervoltProgramPath $tweakedParameters'\
-        > /etc/init.d/$startupScriptFileName"
+        c="#!/bin/bash\n"
+        c=$c"### BEGIN INIT INFO\n"
+        c=$c"# Default-Start: 2 3 4 5\n"
+        c=$c"### END INIT INFO\n"
+        c=$c"modprobe msr\n"
+        c=$c"$undervoltProgramPath $tweakedParameters"
+        
+        sudo bash -c "echo -e '$c' > /etc/init.d/$startupScriptFileName"
         
         sudo chmod +x /etc/init.d/$startupScriptFileName
-        sudo update-rc.d $startupScriptFileName start 2 > /dev/null 2>&1
+        sudo update-rc.d $startupScriptFileName defaults > /dev/null 2>&1
+        sudo update-rc.d $startupScriptFileName enable > /dev/null 2>&1
         
         echo "Enabled on system startup"
     fi
